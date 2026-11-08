@@ -313,12 +313,18 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                     const tr = document.createElement('tr');
                     let tombolAksi = '';
 
+                    // --- MULAI PERBAIKAN A3 (Tombol Hapus menjadi <form> HTML biasa) ---
                     if (canManage) {
                         tombolAksi = `
                             <button class="btn btn-warning" onclick='pilihBuku(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Ubah</button>
-                            <button class="btn btn-danger" onclick="hapusBuku(${item.id}, '${item.judul_buku.replace(/'/g, "\\'")}')">Hapus</button>
+                            <form action="/buku/${item.id}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus buku ini?');">
+                                <input type="hidden" name="_token" value="${csrfToken}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger">Hapus</button>
+                            </form>
                         `;
                     }
+                    // --- AKHIR PERBAIKAN A3 ---
 
                     if (isSiswa) {
                         const statusBukuIni = statusPinjamUser[item.id];
@@ -337,20 +343,16 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                         }
                     }
 
+                    // --- PERBAIKAN A1: Kolom judul_buku diamankan (Escaping) dari serangan XSS ---
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.kategori}</td>
-                        <td class="judul-buku-rentan"></td>
+                        <td>${item.judul_buku.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>
                         <td>${item.nama_penulis}</td>
                         <td>${item.tahun}</td>
                         <td>${tombolAksi}</td>
                     `;
                     tbody.appendChild(tr);
-                    //kode tambahan
-                    const cellJudul = tr.querySelector('.judul-buku-rentan');
-                    cellJudul.innerHTML = item.judul_buku;
-                    const scripts = cellJudul.getElementsByTagName('script');
-                    for (let i = 0; i < scripts.length; i++) eval(scripts[i].innerText);
                 });
             } catch (error) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Gagal memuat data.</td></tr>`;
@@ -415,25 +417,6 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
             document.getElementById('formTitle').innerText = 'Tambah Buku Baru';
             document.getElementById('btnSubmit').innerText = 'Simpan Buku';
             document.getElementById('btnCancel').style.display = 'none';
-        }
-
-        async function hapusBuku(id, judul) {
-            if (!confirm(`Hapus buku "${judul}"?`)) return;
-            try {
-                const response = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-                tampilkanPesan('success', result.message);
-                await loadBuku();
-            } catch (error) {
-                tampilkanPesan('error', 'Gagal Menghapus: ' + error.message);
-            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {

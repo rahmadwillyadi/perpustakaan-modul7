@@ -12,14 +12,17 @@ Route::redirect('/', '/login');
 Route::middleware(['auth'])->group(function () {
 
     // Celah A2: SQL Injection
+    // --- PERBAIKAN A2: Menggunakan Parameter Binding (?) ---
     Route::get('/buku-cari', function (\Illuminate\Http\Request $request) {
         $judul = $request->query('judul');
-        $hasil = \Illuminate\Support\Facades\DB::select("SELECT * FROM bukus WHERE judul = '$judul'");
+        // Nilai variabel dipisahkan ke dalam array agar tidak bisa memanipulasi struktur SQL
+        $hasil = \Illuminate\Support\Facades\DB::select("SELECT * FROM bukus WHERE judul = ?", [$judul]);
         return response()->json($hasil);
     });
 
     // Celah A3: CSRF menggunakan URL GET
-    Route::get('/buku/{buku}/hapus', [\App\Http\Controllers\Api\BukuController::class, 'destroy']);
+    // --- PERBAIKAN A3: Rute diubah ke DELETE ---
+    Route::delete('/buku/{id}', [\App\Http\Controllers\Api\BukuController::class, 'destroy']);
 
     // Celah A4: IDOR tanpa mengecek siapa yang login
     Route::get('/peminjaman/{id}', function ($id) {
