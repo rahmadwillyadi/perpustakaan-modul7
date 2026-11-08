@@ -197,7 +197,7 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
         <div id="alertSuccess" class="alert alert-success"></div>
         <div id="alertError" class="alert alert-error"></div>
 
-        @hasanyrole('admin|petugas')
+        @can('kelola-buku')
         <h3 id="formTitle">Tambah Buku Baru</h3>
         <form id="bukuForm">
             <input type="hidden" id="buku_id">
@@ -223,7 +223,7 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
             <button type="button" id="btnCancel" class="btn btn-secondary" onclick="resetForm()">Batal Ubah</button>
         </form>
         <hr style="margin: 25px 0;">
-        @endhasanyrole
+        @endcan
 
         <h3>Tabel Data Buku</h3>
         <table>
@@ -249,7 +249,10 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
     <script>
         const API_URL = '/api/buku';
         const API_KATEGORI = '/api/kategori';
-        const canManage = "{{ auth()->user()->hasAnyRole(['admin', 'petugas']) ? 'true' : 'false' }}" === "true";
+
+        // SOAL 3: Mengganti hasAnyRole menjadi can pada JavaScript
+        const canManage = "{{ auth()->user()->can('kelola-buku') ? 'true' : 'false' }}" === "true";
+
         const isSiswa = "{{ auth()->user()->hasRole('siswa') ? 'true' : 'false' }}" === "true";
         const csrfToken = "{{ csrf_token() }}";
 
@@ -313,7 +316,6 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                     const tr = document.createElement('tr');
                     let tombolAksi = '';
 
-                    // --- MULAI PERBAIKAN A3 (Tombol Hapus menjadi <form> HTML biasa) ---
                     if (canManage) {
                         tombolAksi = `
                             <button class="btn btn-warning" onclick='pilihBuku(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Ubah</button>
@@ -324,7 +326,6 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                             </form>
                         `;
                     }
-                    // --- AKHIR PERBAIKAN A3 ---
 
                     if (isSiswa) {
                         const statusBukuIni = statusPinjamUser[item.id];
@@ -343,7 +344,6 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                         }
                     }
 
-                    // --- PERBAIKAN A1: Kolom judul_buku diamankan (Escaping) dari serangan XSS ---
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.kategori}</td>

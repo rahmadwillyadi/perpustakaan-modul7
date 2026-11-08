@@ -20,10 +20,6 @@ Route::middleware(['auth'])->group(function () {
         return response()->json($hasil);
     });
 
-    // Celah A3: CSRF menggunakan URL GET
-    // --- PERBAIKAN A3: Rute diubah ke DELETE ---
-    Route::delete('/buku/{id}', [\App\Http\Controllers\Api\BukuController::class, 'destroy']);
-
     // Celah A4: IDOR tanpa mengecek siapa yang login
     Route::get('/peminjaman/{id}', function ($id) {
         $peminjaman = \App\Models\Peminjaman::findOrFail($id);
@@ -54,13 +50,28 @@ Route::middleware(['auth'])->group(function () {
         })->name('petugas.dashboard');
     });
 
-    Route::middleware(['role:admin|petugas'])->group(function () {
+    // SOAL 3: PUSATKAN ATURAN KELOLA BUKU PADA GATE can:kelola-buku
+    Route::middleware(['can:kelola-buku'])->group(function () {
+        
+        // Halaman kelola buku utama
         Route::get('/buku/kelola', function () {
             return view('buku.index');
         })->name('buku.kelola');
 
-        Route::get('/laporan', [PeminjamanController::class, 'laporan'])->name('laporan.index');
+        // Celah A3: CSRF menggunakan URL GET
+        // --- PERBAIKAN A3: Rute diubah ke DELETE dan dipusatkan di dalam Gate ---
+        Route::delete('/buku/{id}', [\App\Http\Controllers\Api\BukuController::class, 'destroy']);
 
+        // Rute buatan khusus untuk memenuhi target screenshot halaman 403 mahasiswa
+        Route::get('/buku/create', function () {
+            return "Halaman form tambah buku (Hanya Admin/Petugas)";
+        });
+
+    });
+
+    // (Rute Peminjaman & Laporan tetap memakai role biasa karena bukan pengelolaan buku)
+    Route::middleware(['role:admin|petugas'])->group(function () {
+        Route::get('/laporan', [PeminjamanController::class, 'laporan'])->name('laporan.index');
         Route::get('/peminjaman', [PeminjamanController::class, 'index']);
         Route::patch('/peminjaman/{id}', [PeminjamanController::class, 'update']);
     });
