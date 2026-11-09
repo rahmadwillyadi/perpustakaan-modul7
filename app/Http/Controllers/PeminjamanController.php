@@ -16,11 +16,17 @@ class PeminjamanController extends Controller
 
     public function riwayat()
     {
-        $riwayat = Peminjaman::with('buku')->where('anggota_id', Auth::id())->get();
+        // Filter langsung dari database menggunakan 'where' agar tidak error dengan Policy/Spatie
+        $riwayat = Peminjaman::with('buku')
+            ->where('anggota_id', Auth::id())
+            ->latest()
+            ->get();
+
         return view('peminjaman.riwayat', compact('riwayat'));
     }
 
-    public function store($buku_id)
+    // Menambahkan tipe data 'string' agar garis biru di VS Code (Intelephense) hilang
+    public function store(string $buku_id)
     {
         Peminjaman::create([
             'anggota_id' => Auth::id(),
@@ -32,7 +38,7 @@ class PeminjamanController extends Controller
         return back()->with('status', 'Pengajuan peminjaman berhasil dikirim.');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
         $peminjaman->update([

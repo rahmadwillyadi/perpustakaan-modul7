@@ -6,24 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Models\Buku;
 use App\Http\Resources\BukuResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; 
 
 class BukuController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $buku = Buku::latest()->get();
+        /** @var \App\Models\User $user */
+        $user = Auth::user(); 
+
+        if ($user && $user->hasRole('siswa')) {
+            $buku = Buku::whereDoesntHave('peminjamans', function ($query) use ($user) {
+                $query->whereIn('status', ['Menunggu Persetujuan', 'Disetujui'])
+                      ->where('anggota_id', '!=', $user->id);
+            })->latest()->get();
+        } else {
+            $buku = Buku::latest()->get();
+        }
+
         return response()->json([
             'message' => 'Berhasil mengambil data buku',
             'data'    => BukuResource::collection($buku)
         ], 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -49,10 +55,8 @@ class BukuController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show($id)
+    // Menambahkan 'string' untuk menghilangkan peringatan biru Intelephense
+    public function show(string $id)
     {
         $buku = Buku::find($id);
         if (!$buku) {
@@ -65,10 +69,8 @@ class BukuController extends Controller
         ], 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    // Menambahkan 'string' untuk menghilangkan peringatan biru Intelephense
+    public function update(Request $request, string $id)
     {
         $buku = Buku::find($id);
         if (!$buku) {
@@ -98,10 +100,8 @@ class BukuController extends Controller
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    // Menambahkan 'string' untuk menghilangkan peringatan biru Intelephense
+    public function destroy(string $id)
     {
         $buku = Buku::find($id);
         if (!$buku) {

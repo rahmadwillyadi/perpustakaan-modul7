@@ -11,19 +11,20 @@ Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {
 
-    // Celah A2: SQL Injection
-    // --- PERBAIKAN A2: Menggunakan Parameter Binding (?) ---
+    // soal 2: benerin celah A2 pake parameter binding biar ga kena sqli
     Route::get('/buku-cari', function (\Illuminate\Http\Request $request) {
         $judul = $request->query('judul');
-        // Nilai variabel dipisahkan ke dalam array agar tidak bisa memanipulasi struktur SQL
         $hasil = \Illuminate\Support\Facades\DB::select("SELECT * FROM bukus WHERE judul = ?", [$judul]);
         return response()->json($hasil);
     });
 
-    // Celah A4: IDOR tanpa mengecek siapa yang login
+    // soal 4: tutup celah A4 (idor) pake policy
     Route::get('/peminjaman/{id}', function ($id) {
         $peminjaman = \App\Models\Peminjaman::findOrFail($id);
-        // Karena sistem Anda memakai API/JSON, kita kembalikan datanya langsung
+        
+        // cek policy 'view', kalo bukan punya dia bakal dilempar 403
+        \Illuminate\Support\Facades\Gate::authorize('view', $peminjaman);
+        
         return response()->json($peminjaman);
     });
 
@@ -50,26 +51,23 @@ Route::middleware(['auth'])->group(function () {
         })->name('petugas.dashboard');
     });
 
-    // SOAL 3: PUSATKAN ATURAN KELOLA BUKU PADA GATE can:kelola-buku
+    // soal 3: pusatin aturan kelola buku di gate
     Route::middleware(['can:kelola-buku'])->group(function () {
         
-        // Halaman kelola buku utama
         Route::get('/buku/kelola', function () {
             return view('buku.index');
         })->name('buku.kelola');
 
-        // Celah A3: CSRF menggunakan URL GET
-        // --- PERBAIKAN A3: Rute diubah ke DELETE dan dipusatkan di dalam Gate ---
+        // perbaikan celah A3, hapus buku diubah ke method delete
         Route::delete('/buku/{id}', [\App\Http\Controllers\Api\BukuController::class, 'destroy']);
 
-        // Rute buatan khusus untuk memenuhi target screenshot halaman 403 mahasiswa
+        // rute buatan buat ngetes siswa dapet 403 pas ngetik url create
         Route::get('/buku/create', function () {
             return "Halaman form tambah buku (Hanya Admin/Petugas)";
         });
 
     });
 
-    // (Rute Peminjaman & Laporan tetap memakai role biasa karena bukan pengelolaan buku)
     Route::middleware(['role:admin|petugas'])->group(function () {
         Route::get('/laporan', [PeminjamanController::class, 'laporan'])->name('laporan.index');
         Route::get('/peminjaman', [PeminjamanController::class, 'index']);
@@ -92,5 +90,6 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/api/buku', [BukuController::class, 'apiBuku']);
 Route::get('/api/kategori', [BukuController::class, 'apiKategori']);
+
 
 require __DIR__ . '/auth.php';
