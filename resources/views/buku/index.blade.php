@@ -1,10 +1,10 @@
 @php
 $statusPinjam = [];
 if(auth()->check() && auth()->user()->hasRole('siswa')) {
-    $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
-        ->whereIn('status', ['Menunggu Persetujuan', 'Disetujui'])
-        ->pluck('status', 'buku_id')
-        ->toArray();
+$statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
+->whereIn('status', ['Menunggu Persetujuan', 'Disetujui'])
+->pluck('status', 'buku_id')
+->toArray();
 }
 @endphp
 <!DOCTYPE html>
@@ -319,9 +319,21 @@ if(auth()->check() && auth()->user()->hasRole('siswa')) {
                     if (canManage) {
                         tombolAksi = `
                             <button class="btn btn-warning" onclick='pilihBuku(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Ubah</button>
-                            <button class="btn btn-danger" onclick="hapusBuku(${item.id})">Hapus</button>
+                            <button class="btn btn-danger" onclick="hapusBuku(${item.id}, '${item.judul_buku.replace(/'/g, "\\'")}')">Hapus</button>
                         `;
                     }
+
+                    // nomor 2c
+                    // if (canManage) {
+                    //     tombolAksi = `
+                    //         <button class="btn btn-warning" onclick='pilihBuku(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Ubah</button>
+                    //         <form action="/buku/${item.id}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus buku ini?');">
+                    //             <input type="hidden" name="_token" value="${csrfToken}">
+                    //             <input type="hidden" name="_method" value="DELETE">
+                    //             <button type="submit" class="btn btn-danger">Hapus</button>
+                    //         </form>
+                    //     `;
+                    // }
 
                     if (isSiswa) {
                         const statusBukuIni = statusPinjamUser[item.id];
@@ -417,7 +429,7 @@ if(auth()->check() && auth()->user()->hasRole('siswa')) {
 
         async function hapusBuku(id) {
             if (!confirm('Yakin ingin menghapus buku ini?')) return;
-            
+
             try {
                 const response = await fetch(`/buku/${id}`, {
                     method: 'DELETE',
@@ -427,9 +439,9 @@ if(auth()->check() && auth()->user()->hasRole('siswa')) {
                     }
                 });
                 const result = await response.json();
-                
+
                 if (!response.ok) throw new Error(result.message);
-                
+
                 tampilkanPesan('success', result.message);
                 await loadBuku(); // Refresh tabel otomatis
             } catch (error) {

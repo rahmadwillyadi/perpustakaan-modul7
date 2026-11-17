@@ -82,7 +82,7 @@ class RolePermissionSeeder extends Seeder
 
         $userAdmin = User::updateOrCreate(
             ['email' => 'admin@gmail.com'],
-            ['name' => 'Admin Judol', 'password' => Hash::make('admin123')]
+            ['name' => 'Admin Judol', 'password' => Hash::make('password123')]
         );
         $userAdmin->syncRoles(['admin']);
 
