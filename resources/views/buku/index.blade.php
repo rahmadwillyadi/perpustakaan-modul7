@@ -247,9 +247,9 @@ if(auth()->check() && auth()->user()->hasRole('siswa')) {
 
     <meta id="data-status" data-pinjam="{{ json_encode($statusPinjam ?? []) }}">
     <script>
-        // PERBAIKAN: Menggunakan url() agar rute selalu benar di Vercel
-        const API_URL = "{{ url('/api/buku') }}";
-        const API_KATEGORI = "{{ url('/api/kategori') }}";
+        // KUNCI PENYELESAIAN: Menggunakan sistem-api agar tidak dicegat oleh Vercel
+        const API_URL = "{{ url('/sistem-api/buku') }}";
+        const API_KATEGORI = "{{ url('/sistem-api/kategori') }}";
 
         // SOAL 3: Mengganti hasAnyRole menjadi can pada JavaScript
         const canManage = "{{ auth()->user()->can('kelola-buku') ? 'true' : 'false' }}" === "true";
