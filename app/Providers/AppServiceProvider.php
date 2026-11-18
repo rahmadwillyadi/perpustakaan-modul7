@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
         // Memaksa penggunaan HTTPS untuk Vercel
         URL::forceScheme('https');
 
+        // Memaksa Vercel memuat alamat utama (mengatasi error tombol Visit)
+        URL::forceRootUrl('https://perpustakaan-modul7.vercel.app');
+
         // --- SOAL 3: Membuat Gate kelola-buku ---
         Gate::define('kelola-buku', function (User $user) {
             return $user->hasAnyRole(['admin', 'petugas']);
