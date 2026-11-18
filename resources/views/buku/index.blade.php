@@ -1,10 +1,10 @@
 @php
 $statusPinjam = [];
 if(auth()->check() && auth()->user()->hasRole('siswa')) {
-$statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
-->whereIn('status', ['Menunggu Persetujuan', 'Disetujui'])
-->pluck('status', 'buku_id')
-->toArray();
+    $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
+        ->whereIn('status', ['Menunggu Persetujuan', 'Disetujui'])
+        ->pluck('status', 'buku_id')
+        ->toArray();
 }
 @endphp
 <!DOCTYPE html>
@@ -247,8 +247,9 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
 
     <meta id="data-status" data-pinjam="{{ json_encode($statusPinjam ?? []) }}">
     <script>
-        const API_URL = '/api/buku';
-        const API_KATEGORI = '/api/kategori';
+        // PERBAIKAN: Menggunakan url() agar rute selalu benar di Vercel
+        const API_URL = "{{ url('/api/buku') }}";
+        const API_KATEGORI = "{{ url('/api/kategori') }}";
 
         // SOAL 3: Mengganti hasAnyRole menjadi can pada JavaScript
         const canManage = "{{ auth()->user()->can('kelola-buku') ? 'true' : 'false' }}" === "true";
@@ -322,18 +323,6 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
                             <button class="btn btn-danger" onclick="hapusBuku(${item.id}, '${item.judul_buku.replace(/'/g, "\\'")}')">Hapus</button>
                         `;
                     }
-
-                    // nomor 2c
-                    // if (canManage) {
-                    //     tombolAksi = `
-                    //         <button class="btn btn-warning" onclick='pilihBuku(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Ubah</button>
-                    //         <form action="/buku/${item.id}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus buku ini?');">
-                    //             <input type="hidden" name="_token" value="${csrfToken}">
-                    //             <input type="hidden" name="_method" value="DELETE">
-                    //             <button type="submit" class="btn btn-danger">Hapus</button>
-                    //         </form>
-                    //     `;
-                    // }
 
                     if (isSiswa) {
                         const statusBukuIni = statusPinjamUser[item.id];
@@ -431,7 +420,7 @@ $statusPinjam = \App\Models\Peminjaman::where('anggota_id', auth()->id())
             if (!confirm('Yakin ingin menghapus buku ini?')) return;
 
             try {
-                const response = await fetch(`/buku/${id}`, {
+                const response = await fetch(`${API_URL}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json',
